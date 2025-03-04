@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center"
+    android:background="#F5F5F5">
+
+    <!-- ImageView to Display the Captured & Processed Image -->
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:scaleType="centerCrop"
+        android:background="@android:color/darker_gray"
+        android:contentDescription="Captured Image" />
+
+    <!-- Capture Image Button -->
+    <Button
+        android:id="@+id/captureButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Capture Image"
+        android:layout_marginTop="16dp" />
+
+    <!-- Process Image Button -->
+    <Button
+        android:id="@+id/processButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Process Image"
+        android:layout_marginTop="8dp" />
+
+    <!-- Result TextView -->
+    <TextView
+        android:id="@+id/resultTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No image processed yet."
+        android:textSize="16sp"
+        android:textColor="#333333"
+        android:gravity="center"
+        android:layout_marginTop="16dp"/>
+
+</LinearLayout>
+

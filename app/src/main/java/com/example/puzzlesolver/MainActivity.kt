@@ -1,30 +1,70 @@
 package com.example.puzzlesolver
 
 import android.graphics.Bitmap
-import org.opencv.android.OpenCVLoader
-import org.opencv.core.CvType
-import org.opencv.core.Mat
-import org.opencv.core.Size
-import org.opencv.imgproc.Imgproc
+import android.os.Bundle
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 
-class ImageProcessor {
-    init {
-        OpenCVLoader.initDebug()
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var imageView: ImageView
+    private lateinit var captureButton: Button
+    private lateinit var processButton: Button
+    private lateinit var resultTextView: TextView
+
+    private lateinit var imageProcessor: ImageProcessor
+
+    private var capturedImage: Bitmap? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        imageView = findViewById(R.id.imageView)
+        captureButton = findViewById(R.id.captureButton)
+        processButton = findViewById(R.id.processButton)
+        resultTextView = findViewById(R.id.resultTextView)
+
+        imageProcessor = ImageProcessor()
+
+        captureButton.setOnClickListener {
+            openCamera()
+        }
+
+        processButton.setOnClickListener {
+            processImageOnly()
+        }
     }
 
-    fun preprocessImage(bitmap: Bitmap): Mat {
-        val mat = Mat()
-        org.opencv.android.Utils.bitmapToMat(bitmap, mat)
-
-        // Convert to grayscale
-        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2GRAY)
-
-        // Apply Gaussian Blur
-        Imgproc.GaussianBlur(mat, mat, Size(5.0, 5.0), 0.0)
-
-        // Apply Adaptive Thresholding
-        Imgproc.adaptiveThreshold(mat, mat, 255.0, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 2.0)
-
-        return mat
+    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        if (bitmap != null) {
+            capturedImage = bitmap
+            imageView.setImageBitmap(bitmap)
+        }
     }
+
+    private fun openCamera() {
+        cameraLauncher.launch(null)
+    }
+
+    private fun processImageOnly() {
+        capturedImage?.let { bitmap ->
+            val processedMat = imageProcessor.preprocessImage(bitmap) // Returns Mat
+
+            // Convert Mat to Bitmap
+            val processedBitmap = Bitmap.createBitmap(
+                processedMat.cols(), processedMat.rows(), Bitmap.Config.ARGB_8888
+            )
+            org.opencv.android.Utils.matToBitmap(processedMat, processedBitmap) // Convert Mat to Bitmap
+
+            imageView.setImageBitmap(processedBitmap)  // Display the processed image
+            resultTextView.text = "Image processed successfully!"
+        } ?: run {
+            resultTextView.text = "Please capture an image first."
+        }
+    }
+
 }
