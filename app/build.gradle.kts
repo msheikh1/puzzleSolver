@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.puzzlesolver"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.puzzlesolver"
@@ -27,11 +27,14 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "21"
+    }
+    buildFeatures {
+        viewBinding=true
     }
 }
 
@@ -56,5 +59,6 @@ dependencies {
     implementation (libs.androidx.camera.core)
     implementation  (libs.androidx.camera.camera2)
     implementation (libs.androidx.camera.lifecycle)
+    implementation (libs.androidx.camera.view.v130)
     implementation (libs.camera.view)
 }

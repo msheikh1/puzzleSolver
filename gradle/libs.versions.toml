@@ -4,6 +4,7 @@ androidxCoreKtx = "1.12.0"
 appcompatVersion = "1.6.1"
 cameraCore = "1.4.1"
 cameraView = "1.4.1"
+cameraViewVersion = "1.3.0"
 kotlin = "1.9.24"
 coreKtx = "1.15.0"
 junit = "4.13.2"
@@ -21,6 +22,7 @@ androidx-appcompat-v161 = { module = "androidx.appcompat:appcompat", version.ref
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "cameraCore" }
 androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "cameraCore" }
+androidx-camera-view-v130 = { module = "androidx.camera:camera-view", version.ref = "cameraViewVersion" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 camera-view = { module = "androidx.camera:camera-view", version.ref = "cameraView" }
 core-ktx-v1120 = { module = "androidx.core:core-ktx", version.ref = "androidxCoreKtx" }
