@@ -9,6 +9,7 @@ import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.YuvImage
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -98,14 +99,14 @@ class CameraActivity : AppCompatActivity() {
         imageCapture.takePicture(ContextCompat.getMainExecutor(this), object : ImageCapture.OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
                 super.onCaptureSuccess(image)
-
                 val bitmap = imageProxyToBitmap(image)
-                runOnUiThread {
-                    imageView.setImageBitmap(bitmap) // Display the captured image
-                }
 
-                // Save and share the image
-                saveAndShareImage(bitmap)
+                // Save the image temporarily and pass the URI to the new activity
+                val imageUri = saveBitmapToFile(bitmap)
+                val intent = Intent(this@CameraActivity, SudokuProcessingActivity::class.java)
+                intent.putExtra("imageUri", imageUri.toString())
+                startActivity(intent)
+
                 image.close()
             }
 
@@ -115,28 +116,14 @@ class CameraActivity : AppCompatActivity() {
         })
     }
 
-    private fun saveAndShareImage(bitmap: Bitmap) {
-        val file = File(getExternalFilesDir(null), "sudoku_image.jpg")
-
-        try {
-            FileOutputStream(file).use { outputStream ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-            }
-
-            val uri = FileProvider.getUriForFile(this, "${applicationContext.packageName}.fileprovider", file)
-
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "image/*"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // Grant temporary access
-            }
-
-            startActivity(Intent.createChooser(intent, "Share Sudoku Image"))
-
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Toast.makeText(this, "Failed to save image", Toast.LENGTH_SHORT).show()
-        }
+    // Function to save the Bitmap to a file and return its URI
+    private fun saveBitmapToFile(bitmap: Bitmap): Uri {
+        val file = File(cacheDir, "sudoku_image.jpg")
+        val outputStream = FileOutputStream(file)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        outputStream.flush()
+        outputStream.close()
+        return FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
     }
 
 

@@ -55,6 +55,7 @@ dependencies {
     // Tesseract OCR for text recognition
     implementation (libs.tess.two)
 
+
     // CameraX for image capture
     implementation (libs.androidx.camera.core)
     implementation  (libs.androidx.camera.camera2)

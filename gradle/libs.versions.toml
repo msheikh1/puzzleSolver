@@ -15,6 +15,7 @@ material = "1.12.0"
 materialVersion = "1.10.0"
 opencvAndroid = "4.5.1"
 opencvAndroidVersion = "4.5.3"
+tesseractAndroid = "5.0.0"
 tessTwo = "9.1.0"
 
 [libraries]
@@ -35,6 +36,7 @@ material-v1100 = { module = "com.google.android.material:material", version.ref 
 opencv-android = { module = "org.opencv:opencv-android", version.ref = "opencvAndroid" }
 opencv-android-v453 = { module = "org.opencv:opencv-android", version.ref = "opencvAndroidVersion" }
 tess-two = { module = "com.rmtheis:tess-two", version.ref = "tessTwo" }
+tesseract-android = { module = "com.googlecode.tesseract.android:tesseract-android", version.ref = "tesseractAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
