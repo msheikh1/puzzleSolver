@@ -57,6 +57,12 @@ dependencies {
 
 
     // CameraX for image capture
+
+    implementation (libs.android.volley)
+    implementation (libs.gson)
+    implementation(libs.okhttp)
+
+
     implementation (libs.androidx.camera.core)
     implementation  (libs.androidx.camera.camera2)
     implementation (libs.androidx.camera.lifecycle)

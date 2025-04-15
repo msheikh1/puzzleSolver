@@ -12,6 +12,7 @@ import org.opencv.android.Utils
 import org.opencv.calib3d.Calib3d
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
+import java.io.ByteArrayOutputStream
 
 class SudokuProcessingActivity : AppCompatActivity() {
     private lateinit var processedImageView: ImageView
@@ -84,7 +85,7 @@ class SudokuProcessingActivity : AppCompatActivity() {
 // Find the largest contour that is likely to be the Sudoku grid
         var maxArea = 0.0
         var sudokuContour: MatOfPoint? = null
-        val approxCorners: MatOfPoint2f? = null
+        var approxCorners: MatOfPoint2f? = null
 
         for (contour in contours) {
             val area = Imgproc.contourArea(contour)
@@ -97,6 +98,7 @@ class SudokuProcessingActivity : AppCompatActivity() {
                 if (approx.toArray().size == 4) {
                     maxArea = area
                     sudokuContour = contour
+                    approxCorners = approx
                 }
             }
         }
@@ -138,8 +140,22 @@ class SudokuProcessingActivity : AppCompatActivity() {
         // Return edge-detected image if no grid is found
         val processedBitmap = Bitmap.createBitmap(sideLength, sideLength, Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(warped, processedBitmap)
-        return processedBitmap
+
+    val classifier = PuzzleClassifier()
+    classifier.classify(processedBitmap) { prediction, confidence, error ->
+        runOnUiThread {
+            if (error != null) {
+                Toast.makeText(this, "Error: $error", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "Prediction: $prediction\nConfidence: $confidence", Toast.LENGTH_LONG).show()
+            }
+        }
     }
+
+    // Return the processed image (after perspective transformation)
+    return processedBitmap
+
+}
 
 
     //     Process the Sudoku Image
@@ -188,5 +204,16 @@ class SudokuProcessingActivity : AppCompatActivity() {
             bottomRow[0]  // bottom-left
         )
     }
+
+    private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        return stream.toByteArray()
+    }
+
+
+
+
 }
+
 
