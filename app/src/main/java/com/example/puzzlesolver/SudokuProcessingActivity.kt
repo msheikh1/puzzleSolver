@@ -36,10 +36,29 @@ class SudokuProcessingActivity : AppCompatActivity() {
             val imageUri = Uri.parse(imageUriString)
             val bitmap = uriToBitmap(imageUri)
 
-            // Process the image
-            val processedBitmap = processSudoku(bitmap)
-            processedImageView.setImageBitmap(processedBitmap)
+            val classifier = PuzzleClassifier()
+            classifier.classify(bitmap) { prediction, confidence, error ->
+                runOnUiThread {
+                    if (error != null) {
+                        Toast.makeText(this, "Error: $error", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(this, "Prediction: $prediction\nConfidence: $confidence", Toast.LENGTH_LONG).show()
+
+                        val processedBitmap = when {
+                            prediction?.contains("sudoku", ignoreCase = true) == true -> processSudoku(bitmap)
+                            prediction?.contains("kakuro", ignoreCase = true) == true -> processKakuro(bitmap)
+                            prediction?.contains("nonogram", ignoreCase = true) == true -> processNonogram(bitmap)
+                            else -> {
+                                Toast.makeText(this, "Unknown puzzle type", Toast.LENGTH_SHORT).show()
+                                bitmap
+                            }
+                        }
+                        processedImageView.setImageBitmap(processedBitmap)
+                    }
+                }
+            }
         }
+
     }
 
     // Convert URI to Bitmap
@@ -112,6 +131,7 @@ class SudokuProcessingActivity : AppCompatActivity() {
             return bitmap
         }
 
+
         // Draw detected Sudoku grid
         val corners = approxCorners.toArray()
         val orderedCorners = orderPoints(corners)
@@ -137,28 +157,187 @@ class SudokuProcessingActivity : AppCompatActivity() {
             mat, warped, homography, Size(sideLength.toDouble(), sideLength.toDouble())
         )
 
-        // Return edge-detected image if no grid is found
+
         val processedBitmap = Bitmap.createBitmap(sideLength, sideLength, Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(warped, processedBitmap)
-
-    val classifier = PuzzleClassifier()
-    classifier.classify(processedBitmap) { prediction, confidence, error ->
-        runOnUiThread {
-            if (error != null) {
-                Toast.makeText(this, "Error: $error", Toast.LENGTH_LONG).show()
-            } else {
-                Toast.makeText(this, "Prediction: $prediction\nConfidence: $confidence", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
 
     // Return the processed image (after perspective transformation)
     return processedBitmap
 
 }
 
+    private fun processNonogram(bitmap: Bitmap): Bitmap {
+        val mat = Mat()
+        Utils.bitmapToMat(bitmap, mat)
 
-    //     Process the Sudoku Image
+        // Convert to Grayscale
+        val gray = Mat()
+        Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGRA2GRAY)
+
+        // Blur to reduce noise
+        val blurred = Mat()
+        Imgproc.GaussianBlur(gray, blurred, Size(5.0, 5.0), 3.0)
+
+        // Adaptive thresholding to binarize the image
+        val thresholded = Mat()
+        Imgproc.adaptiveThreshold(
+            blurred, thresholded, 255.0,
+            Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 11, 2.0
+        )
+
+        // Find contours
+        val contours = mutableListOf<MatOfPoint>()
+        val hierarchy = Mat()
+        Imgproc.findContours(thresholded, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+
+        var maxArea = 0.0
+        var nonogramContour: MatOfPoint? = null
+        var approxCorners: MatOfPoint2f? = null
+
+        // Find the largest quadrilateral contour
+        for (contour in contours) {
+            val area = Imgproc.contourArea(contour)
+            if (area > maxArea) {
+                val peri = Imgproc.arcLength(MatOfPoint2f(*contour.toArray()), true)
+                val approx = MatOfPoint2f()
+                Imgproc.approxPolyDP(MatOfPoint2f(*contour.toArray()), approx, 0.02 * peri, true)
+
+                if (approx.toArray().size == 4) {
+                    maxArea = area
+                    nonogramContour = contour
+                    approxCorners = approx
+                }
+            }
+        }
+
+        if (nonogramContour == null || approxCorners == null) {
+            showNoGridFoundAlert()
+            return bitmap
+        }
+
+        // Warp the detected grid
+        val corners = approxCorners.toArray()
+        val orderedCorners = orderPoints(corners)
+
+        // You can increase the side length if you expect more detailed grids
+        val sideLength = 900
+        val dstPoints = MatOfPoint2f(
+            Point(0.0, 0.0),
+            Point(sideLength.toDouble(), 0.0),
+            Point(sideLength.toDouble(), sideLength.toDouble()),
+            Point(0.0, sideLength.toDouble())
+        )
+
+        val srcPoints = MatOfPoint2f(*orderedCorners)
+        val homography = Calib3d.findHomography(srcPoints, dstPoints)
+
+        val warped = Mat()
+        Imgproc.warpPerspective(mat, warped, homography, Size(sideLength.toDouble(), sideLength.toDouble()))
+
+        val processedBitmap = Bitmap.createBitmap(sideLength, sideLength, Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(warped, processedBitmap)
+
+        return processedBitmap
+    }
+
+
+    private fun processKakuro(bitmap: Bitmap): Bitmap {
+        val mat = Mat()
+        Utils.bitmapToMat(bitmap, mat)
+
+        // Convert to grayscale
+        val gray = Mat()
+        Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGRA2GRAY)
+
+        // Blur to reduce noise
+        val blurred = Mat()
+        Imgproc.GaussianBlur(gray, blurred, Size(5.0, 5.0), 3.0)
+
+        // Adaptive thresholding
+        val thresholded = Mat()
+        Imgproc.adaptiveThreshold(
+            blurred, thresholded, 255.0,
+            Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY_INV, 11, 2.0
+        )
+
+        // Find contours
+        val contours = mutableListOf<MatOfPoint>()
+        val hierarchy = Mat()
+        Imgproc.findContours(thresholded, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+
+        var maxArea = 0.0
+        var kakuroContour: MatOfPoint? = null
+        var approxCorners: MatOfPoint2f? = null
+
+        // Detect the largest rectangular contour (likely the puzzle)
+        for (contour in contours) {
+            val area = Imgproc.contourArea(contour)
+            if (area > maxArea) {
+                val peri = Imgproc.arcLength(MatOfPoint2f(*contour.toArray()), true)
+                val approx = MatOfPoint2f()
+                Imgproc.approxPolyDP(MatOfPoint2f(*contour.toArray()), approx, 0.02 * peri, true)
+
+                if (approx.toArray().size == 4) {
+                    maxArea = area
+                    kakuroContour = contour
+                    approxCorners = approx
+                }
+            }
+        }
+
+        if (kakuroContour == null || approxCorners == null) {
+            showNoGridFoundAlert()
+            return bitmap
+        }
+
+        // Order corners
+        val corners = approxCorners.toArray()
+        val orderedCorners = orderPoints(corners)
+
+        // Warp the grid to a square
+        val sideLength = 1000
+        val dstPoints = MatOfPoint2f(
+            Point(0.0, 0.0),
+            Point(sideLength.toDouble(), 0.0),
+            Point(sideLength.toDouble(), sideLength.toDouble()),
+            Point(0.0, sideLength.toDouble())
+        )
+        val srcPoints = MatOfPoint2f(*orderedCorners)
+        val homography = Calib3d.findHomography(srcPoints, dstPoints)
+
+        val warped = Mat()
+        Imgproc.warpPerspective(mat, warped, homography, Size(sideLength.toDouble(), sideLength.toDouble()))
+
+        val processedBitmap = Bitmap.createBitmap(sideLength, sideLength, Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(warped, processedBitmap)
+
+        return processedBitmap
+    }
+
+
+    private fun showNoGridFoundAlert() {
+        Toast.makeText(this, "No Sudoku grid detected", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun orderPoints(points: Array<Point>): Array<Point> {
+        // Sort points by y-coordinate to get top and bottom rows
+        points.sortBy { it.y }
+
+        val topRow = arrayOf(points[0], points[1]).sortedBy { it.x }.toTypedArray()
+        val bottomRow = arrayOf(points[2], points[3]).sortedBy { it.x }.toTypedArray()
+
+        return arrayOf(
+            topRow[0],  // top-left
+            topRow[1],  // top-right
+            bottomRow[1], // bottom-right
+            bottomRow[0]  // bottom-left
+        )
+    }
+}
+
+
+
+//     Process the Sudoku Image
 //        private fun processSudoku(bitmap: Bitmap): Bitmap {
 //            val mat = Mat()
 //            Utils.bitmapToMat(bitmap, mat)
@@ -184,36 +363,5 @@ class SudokuProcessingActivity : AppCompatActivity() {
 //            // Return the dilated image
 //            return processedBitmap
 //        }
-
-
-    private fun showNoGridFoundAlert() {
-        Toast.makeText(this, "No Sudoku grid detected", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun orderPoints(points: Array<Point>): Array<Point> {
-        // Sort points by y-coordinate to get top and bottom rows
-        points.sortBy { it.y }
-
-        val topRow = arrayOf(points[0], points[1]).sortedBy { it.x }.toTypedArray()
-        val bottomRow = arrayOf(points[2], points[3]).sortedBy { it.x }.toTypedArray()
-
-        return arrayOf(
-            topRow[0],  // top-left
-            topRow[1],  // top-right
-            bottomRow[1], // bottom-right
-            bottomRow[0]  // bottom-left
-        )
-    }
-
-    private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
-        val stream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-        return stream.toByteArray()
-    }
-
-
-
-
-}
 
 

@@ -25,20 +25,25 @@ def classify_image():
         image_input = preprocess(image).unsqueeze(0).to(device)
 
         # Define text labels
-        labels = ["Sudoku", "Nonogram", "Kakuro", "Not a recognized puzzle",]
+        labels = [
+            ("sudoku", "A Sudoku puzzle grid with 9x9 boxes"),
+            ("nonogram", "A Nonogram puzzle with number clues on top and left sides"),
+            ("kakuro", "A Kakuro puzzle with diagonal number clues and empty cells"),
+            ("none", "An image that does not contain a puzzle")
+        ]
 
-        text_tokens = clip.tokenize(labels).to(device)
+        text_descriptions = [desc for _, desc in labels]
+        text_tokens = clip.tokenize(text_descriptions).to(device)
 
         with torch.no_grad():
             image_features = model.encode_image(image_input)
             text_features = model.encode_text(text_tokens)
-
-            # Calculate similarity
             logits_per_image, _ = model(image_input, text_tokens)
             probs = logits_per_image.softmax(dim=-1).cpu().numpy()[0]
 
-        # Return top prediction
         top_index = int(probs.argmax())
+        predicted_label, predicted_desc = labels[top_index]
+        
         return jsonify({
             "prediction": labels[top_index],
             "confidence": float(probs[top_index])
