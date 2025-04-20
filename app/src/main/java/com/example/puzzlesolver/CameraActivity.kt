@@ -2,13 +2,9 @@ package com.example.puzzlesolver
 
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
 import android.graphics.Matrix
-import android.graphics.Rect
-import android.graphics.YuvImage
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -21,11 +17,8 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
-import java.nio.ByteBuffer
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -103,7 +96,7 @@ class CameraActivity : AppCompatActivity() {
 
                 // Save the image temporarily and pass the URI to the new activity
                 val imageUri = saveBitmapToFile(bitmap)
-                val intent = Intent(this@CameraActivity, SudokuProcessingActivity::class.java)
+                val intent = Intent(this@CameraActivity, PuzzleImageProcessorActivity::class.java)
                 intent.putExtra("imageUri", imageUri.toString())
                 startActivity(intent)
 

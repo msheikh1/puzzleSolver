@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+
 }
 
 android {
@@ -55,8 +56,14 @@ dependencies {
     // Tesseract OCR for text recognition
     implementation (libs.tess.two)
 
-
+    implementation (libs.tensorflow.lite) // or latest
+    implementation (libs.tensorflow.lite.support)
     // CameraX for image capture
+
+    implementation (libs.text.recognition)
+
+    implementation (libs.kotlinx.coroutines.android)
+    implementation (libs.kotlinx.coroutines.play.services)
 
     implementation (libs.android.volley)
     implementation (libs.gson)

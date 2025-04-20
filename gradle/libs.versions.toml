@@ -13,13 +13,20 @@ junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
+kotlinxCoroutinesAndroid = "1.7.3"
+kotlinxCoroutinesPlayServices = "1.6.4"
 material = "1.12.0"
 materialVersion = "1.10.0"
 okhttp = "4.12.0"
 opencvAndroid = "4.5.1"
 opencvAndroidVersion = "4.5.3"
+tensorflowLite = "2.13.0"
+tensorflowLiteSupport = "0.4.3"
 tesseractAndroid = "5.0.0"
 tessTwo = "9.1.0"
+textRecognition = "16.0.1"
+textRecognitionLatin = "16.0.0"
+textRecognitionVersion = "16.0.0"
 
 [libraries]
 android-volley = { module = "com.android.volley:volley", version.ref = "androidVolley" }
@@ -36,13 +43,20 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 material-v1100 = { module = "com.google.android.material:material", version.ref = "materialVersion" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 opencv-android = { module = "org.opencv:opencv-android", version.ref = "opencvAndroid" }
 opencv-android-v453 = { module = "org.opencv:opencv-android", version.ref = "opencvAndroidVersion" }
+tensorflow-lite = { module = "org.tensorflow:tensorflow-lite", version.ref = "tensorflowLite" }
+tensorflow-lite-support = { module = "org.tensorflow:tensorflow-lite-support", version.ref = "tensorflowLiteSupport" }
 tess-two = { module = "com.rmtheis:tess-two", version.ref = "tessTwo" }
 tesseract-android = { module = "com.googlecode.tesseract.android:tesseract-android", version.ref = "tesseractAndroid" }
+text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "textRecognition" }
+text-recognition-latin = { module = "com.google.mlkit:text-recognition-latin", version.ref = "textRecognitionLatin" }
+text-recognition-v1600 = { module = "com.google.mlkit:text-recognition", version.ref = "textRecognitionVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
