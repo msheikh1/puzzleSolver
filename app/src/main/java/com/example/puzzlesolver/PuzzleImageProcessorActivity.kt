@@ -6,19 +6,28 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.opencv.android.OpenCVLoader
 
 class PuzzleImageProcessorActivity : AppCompatActivity() {
     private lateinit var processedImageView: ImageView
+    private lateinit var solveButton: Button
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
+    private var sudokuBoard: Array<Array<SudokuProcessor.SudokuCell>>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_puzzle_processing)
 
         processedImageView = findViewById(R.id.processedImageView)
+        solveButton = findViewById(R.id.solveButton)
 
         // Initialize OpenCV
         if (!OpenCVLoader.initDebug()) {
@@ -39,6 +48,35 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
         processedImageView.postDelayed({
             processImage(bitmap)
         }, 500)
+
+        solveButton.setOnClickListener {
+            sudokuBoard?.let { board ->
+                coroutineScope.launch {
+                    val processor = SudokuProcessor(this@PuzzleImageProcessorActivity)
+                    val isSolved = processor.solveSudoku(board)
+                    if (isSolved) {
+                        board.printToConsole()
+                        Toast.makeText(
+                            this@PuzzleImageProcessorActivity,
+                            "Sudoku solved successfully!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            this@PuzzleImageProcessorActivity,
+                            "Failed to solve Sudoku",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            } ?: run {
+                Toast.makeText(
+                    this,
+                    "Please process the Sudoku first",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
     }
 
     private fun processImage(originalBitmap: Bitmap) {
@@ -52,11 +90,29 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                 else -> null
             }
 
-            if (processor != null) {
+            if (processor != null && processor is SudokuProcessor) {
+                // First process the image to get the cleaned bitmap
                 val processedBitmap = processor.process(originalBitmap)
                 runOnUiThread {
                     processedImageView.setImageBitmap(processedBitmap)
                     Toast.makeText(this, "Processing complete", Toast.LENGTH_SHORT).show()
+                }
+
+                // Then extract the numbers using coroutine
+                coroutineScope.launch {
+                    try {
+                        sudokuBoard = processor.extractSudokuNumbers(processedBitmap)
+                        Log.d("SudokuProcessor", "Numbers extracted successfully")
+                    } catch (e: Exception) {
+                        Log.e("SudokuProcessor", "Error extracting numbers", e)
+                        runOnUiThread {
+                            Toast.makeText(
+                                this@PuzzleImageProcessorActivity,
+                                "Error extracting numbers: ${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
                 }
             } else {
                 runOnUiThread {
@@ -71,6 +127,11 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                 processedImageView.setImageBitmap(originalBitmap)
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        coroutineScope.cancel()
     }
 }
 
