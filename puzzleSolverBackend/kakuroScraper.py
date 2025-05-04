@@ -39,7 +39,6 @@ try:
 
             with Image.open(screenshot_path) as img:
                 # Customize crop area as needed for different puzzle sizes
-                # These are estimates, and you may want to adjust
                 crop_box = {
                     '8x8': (490, 7, 1000, 519)
                 }[size]

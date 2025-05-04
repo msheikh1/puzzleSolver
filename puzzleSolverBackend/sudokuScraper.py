@@ -14,7 +14,6 @@ chrome_options.add_argument('--window-size=1200,800')
 # Path to ChromeDriver
 CHROMEDRIVER_PATH = r'C:\WebDrivers\chromedriver-win64\chromedriver.exe'
 
-# Sudoku difficulties (you can modify the difficulty based on your need)
 difficulty = 'easy'
 SUDOKU_BASE_URL = 'https://www.sudokuweb.org/'
 
@@ -30,8 +29,7 @@ i = 870
 try:
     for i in range(1580, 3000):  # Number of puzzles
 
-        # Update the URL for Sudoku (make sure the puzzle is from a URL that provides an image)
-        puzzle_url = f'{SUDOKU_BASE_URL}?difficulty={difficulty}'  # Example URL structure
+        puzzle_url = f'{SUDOKU_BASE_URL}?difficulty={difficulty}'  
         driver.get(puzzle_url)
         time.sleep(4)  # Allow time for full render
 
@@ -44,13 +42,12 @@ try:
 
         with Image.open(full_image_path) as img:
             # Adjust crop box based on the actual puzzle's position on the screen
-            crop_box = (148, 324, 508, 685)  # Example coordinates for Sudoku puzzles
+            crop_box = (148, 324, 508, 685)  
             
             puzzle_img = img.crop(crop_box)
             final_path = os.path.join(OUTPUT_DIR, f'sudoku_puzzle_{i}.png')
             puzzle_img.save(final_path)
         
-        # Remove the renamed full image after processing
         os.remove(full_image_path)
 
         print(f'Saved Sudoku puzzle {i + 1}')
