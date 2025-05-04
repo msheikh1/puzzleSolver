@@ -44,27 +44,6 @@ class BinaryProcessor(private val context: Context) : PuzzleProcessor {
             }
             set(newValue) {
                 state = when (newValue) {
-                    data class BinaryCell(
-                        val row: Int,
-                        val col: Int,
-                        var state: BinaryCellState = BinaryCellState.EMPTY,
-                        var isFixed: Boolean = false
-                        ) {
-                        // Add this property to handle numeric values
-                        var value: Int
-                        get() = when (state) {
-                            BinaryCellState.ZERO -> 0
-                            BinaryCellState.ONE -> 1
-                            BinaryCellState.EMPTY -> -1
-                        }
-                        set(newValue) {
-                            state = when (newValue) {
-                                0 -> BinaryCellState.ZERO
-                                1 -> BinaryCellState.ONE
-                                else -> BinaryCellState.EMPTY
-                            }
-                        }
-                    }
                     0 -> BinaryCellState.ZERO
                     1 -> BinaryCellState.ONE
                     else -> BinaryCellState.EMPTY
