@@ -1,122 +1,137 @@
-// KakuroProcessor.kt
 package com.example.puzzlesolver
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import android.widget.Toast
+import com.example.puzzlesolver.KakuroProcessor.KakuroCell
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.*
+import kotlinx.coroutines.tasks.await
 import org.opencv.android.Utils
-import org.opencv.calib3d.Calib3d
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
 
 class KakuroProcessor(private val context: Context) : PuzzleProcessor {
-    override fun process(bitmap: Bitmap): Bitmap {
-        val mat = Mat()
-        Utils.bitmapToMat(bitmap, mat)
 
-        // Convert to Grayscale
-        val gray = Mat()
-        Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGRA2GRAY)
+    private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private val TAG = "KakuroProcessor"
 
-        // Apply Gaussian Blur
-        val blurred = Mat()
-        Imgproc.GaussianBlur(gray, blurred, Size(5.0, 5.0), 3.0)
+    enum class KakuroCellType {
+        BLOCKED, CLUE_ONE, CLUE_TWO, EMPTY
+    }
 
-        // Apply Adaptive Threshold
-        val thresholded = Mat()
-        Imgproc.adaptiveThreshold(
-            blurred,
-            thresholded,
-            255.0,
-            Imgproc.ADAPTIVE_THRESH_MEAN_C,
-            Imgproc.THRESH_BINARY_INV,
-            11,
-            2.0
-        )
+    data class KakuroCell(
+        val row: Int,
+        val col: Int,
+        var type: KakuroCellType = KakuroCellType.EMPTY,
+        var clues: List<String> = listOf(),
+        var downRuns: MutableList<Run> = mutableListOf(),
+        var acrossRuns: MutableList<Run> = mutableListOf(),
+        var number: Int = 0  // 0 represents empty
+    )
 
-        // Find Contours
-        val contours = mutableListOf<MatOfPoint>()
-        val hierarchy = Mat()
-        Imgproc.findContours(
-            thresholded, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE
-        )
+    suspend fun extractKakuroCells(bitmap: Bitmap): Array<Array<KakuroCell>> {
+        val cellWidth = bitmap.width / 5
+        val cellHeight = bitmap.height / 5
+        val kakuroBoard = Array(5) { row -> Array(5) { col -> KakuroCell(row, col) } }
 
-        // Find the largest contour that is likely to be the Kakuro grid
-        var maxArea = 0.0
-        var kakuroContour: MatOfPoint? = null
-        var approxCorners: MatOfPoint2f? = null
-
-        for (contour in contours) {
-            val area = Imgproc.contourArea(contour)
-            if (area > maxArea) {
-                val peri = Imgproc.arcLength(MatOfPoint2f(*contour.toArray()), true)
-                val approx = MatOfPoint2f()
-                Imgproc.approxPolyDP(
-                    MatOfPoint2f(*contour.toArray()),
-                    approx,
-                    0.02 * peri,
-                    true
+        for (row in 0 until 5) {
+            for (col in 0 until 5) {
+                val cellBitmap = Bitmap.createBitmap(
+                    bitmap,
+                    col * cellWidth,
+                    row * cellHeight,
+                    cellWidth,
+                    cellHeight
                 )
-
-                if (approx.toArray().size == 4) {
-                    maxArea = area
-                    kakuroContour = contour
-                    approxCorners = approx
-                }
+                kakuroBoard[row][col] = processCell(cellBitmap, row, col)
             }
         }
 
-        if (kakuroContour == null || approxCorners == null) {
-            showNoGridFoundAlert()
-            return bitmap
+        kakuroBoard.printToConsole()
+        return kakuroBoard
+    }
+
+    private suspend fun processCell(cellBitmap: Bitmap, row: Int, col: Int): KakuroCell {
+        val mat = Mat()
+        Utils.bitmapToMat(cellBitmap, mat)
+
+        // Convert to grayscale
+        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2GRAY)
+
+        // Use Canny or line detection to check for a slash
+        val edges = Mat()
+        Imgproc.Canny(mat, edges, 50.0, 150.0)
+
+        val hasSlash = detectSlash(edges)
+
+        val preprocessedBitmap = preprocessForOCR(mat)
+        val image = InputImage.fromBitmap(preprocessedBitmap, 0)
+        val result = textRecognizer.process(image).await()
+
+        val text = result.text.trim()
+        val digits = text.split(Regex("[^\\d]+")).filter { it.isNotBlank() }
+
+        return when {
+            hasSlash && digits.isEmpty() -> KakuroCell(row, col, KakuroCellType.BLOCKED)
+            hasSlash && digits.size == 1 -> KakuroCell(row, col, KakuroCellType.CLUE_ONE, digits)
+            hasSlash && digits.size >= 2 -> KakuroCell(row, col, KakuroCellType.CLUE_TWO, digits)
+            else -> KakuroCell(row, col, KakuroCellType.EMPTY)
         }
+    }
 
-        // Order the corners
-        val corners = approxCorners.toArray()
-        val orderedCorners = orderPoints(corners)
+    private fun detectSlash(edgeMat: Mat): Boolean {
+        val lines = Mat()
+        Imgproc.HoughLinesP(edgeMat, lines, 1.0, Math.PI / 180, 20, 20.0, 10.0)
 
-        // Define destination points
-        val sideLength = 1000
-        val dstPoints = MatOfPoint2f(
-            Point(0.0, 0.0),
-            Point(sideLength.toDouble(), 0.0),
-            Point(sideLength.toDouble(), sideLength.toDouble()),
-            Point(0.0, sideLength.toDouble())
-        )
+        for (i in 0 until lines.rows()) {
+            val line = lines.get(i, 0)
+            val x1 = line[0]
+            val y1 = line[1]
+            val x2 = line[2]
+            val y2 = line[3]
 
-        // Calculate homography and apply perspective transform
-        val srcPoints = MatOfPoint2f(*orderedCorners)
-        val homography = Calib3d.findHomography(srcPoints, dstPoints)
-        val warped = Mat()
-        Imgproc.warpPerspective(
-            mat, warped, homography, Size(sideLength.toDouble(), sideLength.toDouble())
-        )
+            val angle = Math.toDegrees(Math.atan2((y2 - y1), (x2 - x1)))
+            if (angle in 40.0..50.0 || angle in -50.0..-40.0) {
+                return true
+            }
+        }
+        return false
+    }
 
-        // Additional Kakuro-specific processing
-        processKakuroCells(warped)
+    private fun preprocessForOCR(mat: Mat): Bitmap {
+        Imgproc.GaussianBlur(mat, mat, Size(3.0, 3.0), 0.0)
+        Imgproc.adaptiveThreshold(mat, mat, 255.0,
+            Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY_INV, 11, 2.0)
 
-        val processedBitmap = Bitmap.createBitmap(sideLength, sideLength, Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(warped, processedBitmap)
-        return processedBitmap
+        val bitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(mat, bitmap)
+        return bitmap
+    }
+
+    override suspend fun process(bitmap: Bitmap): Bitmap {
+        // Optionally highlight cells or return preprocessed board
+        return bitmap
     }
 
     override fun showNoGridFoundAlert() {
-        Toast.makeText(context, "No Kakuro grid detected", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Unable to process Kakuro grid", Toast.LENGTH_SHORT).show()
     }
 
-    private fun orderPoints(points: Array<Point>): Array<Point> {
-        points.sortBy { it.y }
-        val topRow = arrayOf(points[0], points[1]).sortedBy { it.x }.toTypedArray()
-        val bottomRow = arrayOf(points[2], points[3]).sortedBy { it.x }.toTypedArray()
-        return arrayOf(
-            topRow[0],  // top-left
-            topRow[1],  // top-right
-            bottomRow[1], // bottom-right
-            bottomRow[0]  // bottom-left
-        )
-    }
+}
 
-    private fun processKakuroCells(mat: Mat) {
-        // Implement Kakuro-specific cell processing here
+fun Array<Array<KakuroProcessor.KakuroCell>>.printToConsole() {
+    forEach { row ->
+        val rowString = row.joinToString(" | ") { cell ->
+            val typeChar = cell.type.name.first().toString()
+            val cluesStr = if (cell.clues.isNotEmpty()) cell.clues.joinToString(",") else ""
+            "$typeChar(${cluesStr})"
+        }
+        Log.d("KakuroProcessor", rowString)
     }
 }
+
+

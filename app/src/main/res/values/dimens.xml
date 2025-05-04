@@ -1,0 +1,4 @@
+<resources>
+    <!-- Other dimensions -->
+    <dimen name="puzzle_size">400dp</dimen>
+</resources>

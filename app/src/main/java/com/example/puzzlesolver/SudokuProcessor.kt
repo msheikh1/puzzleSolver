@@ -21,7 +21,7 @@ class SudokuProcessor(private val context: Context) : PuzzleProcessor {
     private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private val TAG = "SudokuProcessor"
 
-    override fun process(bitmap: Bitmap): Bitmap {
+    override suspend fun process(bitmap: Bitmap): Bitmap {
         val mat = Mat()
         Utils.bitmapToMat(bitmap, mat)
 

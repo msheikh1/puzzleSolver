@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <Button
+        android:id="@+id/btnSudoku"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="Sudoku"
+        android:textAllCaps="false"
+        style="@style/PuzzleButtonStyle"/>
+
+    <Button
+        android:id="@+id/btnKakuro"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="Kakuro"
+        android:textAllCaps="false"
+        style="@style/Widget.AppCompat.Button.Colored"/>
+
+    <Button
+        android:id="@+id/btnBinary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Binary Puzzle"
+        android:textAllCaps="false"
+        style="@style/Widget.AppCompat.Button.Colored"/>
+
+
+
+</LinearLayout>

@@ -60,7 +60,11 @@ dependencies {
     implementation (libs.tensorflow.lite.support)
     // CameraX for image capture
 
+
+    implementation (libs.lottie)
     implementation (libs.text.recognition)
+    implementation (libs.material.v1110) // or latest
+
 
     implementation (libs.kotlinx.coroutines.android)
     implementation (libs.kotlinx.coroutines.play.services)
