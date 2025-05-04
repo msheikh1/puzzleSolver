@@ -31,6 +31,4 @@
         android:textAllCaps="false"
         style="@style/Widget.AppCompat.Button.Colored"/>
 
-
-
 </LinearLayout>

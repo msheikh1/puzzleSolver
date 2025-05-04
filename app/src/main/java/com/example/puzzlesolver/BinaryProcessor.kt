@@ -35,7 +35,7 @@ class BinaryProcessor(private val context: Context) : PuzzleProcessor {
         var state: BinaryCellState = BinaryCellState.EMPTY,
         var isFixed: Boolean = false
     ) {
-        // Add this property to handle numeric values
+
         var value: Int
             get() = when (state) {
                 BinaryCellState.ZERO -> 0
@@ -53,7 +53,7 @@ class BinaryProcessor(private val context: Context) : PuzzleProcessor {
 
     private fun createDebugDirectory(): File {
         return if (Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED) {
-            // Use public Downloads directory for easier access
+            //  public Downloads directory for easier access
             File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
                 "PuzzleSolver_Debug").apply { mkdirs() }
         } else {

@@ -219,7 +219,6 @@ object PuzzleGenLogic {
 
     // Binary Puzzle Generator
     fun generateBinaryPuzzle(size: Int = 8): Array<IntArray> {
-        // Try generating a valid grid a few times before giving up
         repeat(10) {
             val grid = Array(size) { IntArray(size) { -1 } }
 

@@ -1,4 +1,4 @@
-// KakuroSolver.kt
+
 package com.example.puzzlesolver
 
 import com.example.puzzlesolver.KakuroProcessor.KakuroCell

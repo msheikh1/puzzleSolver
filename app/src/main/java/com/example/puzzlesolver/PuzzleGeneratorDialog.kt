@@ -160,21 +160,6 @@ class PuzzleGeneratorDialog : DialogFragment() {
             setMeasuredDimension(width, width) // Make the view square
         }
 
-//        override fun onDraw(canvas: Canvas) {
-//            super.onDraw(canvas)
-//            when (val p = puzzle) {
-//                is Array<*> -> {
-//                    if (p.isNotEmpty() && p[0] is IntArray) {
-//                        drawSudoku(canvas, p as Array<IntArray>)
-//                    } else {
-//                        drawBinaryPuzzle(canvas, p as Array<IntArray>)
-//                    }
-//                }
-//                is PuzzleGenLogic.KakuroPuzzle -> drawKakuro(canvas, p)
-//                else -> {}
-//            }
-//        }
-
         fun setPuzzle(puzzle: Any) {
             this.puzzle = puzzle
             invalidate() // This should trigger a redraw

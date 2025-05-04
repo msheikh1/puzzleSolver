@@ -18,7 +18,6 @@
             android:layout_marginBottom="10dp"
             android:text="Back" />
 
-        <!-- YouTube Video with Fallback -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="200dp"
@@ -41,7 +40,6 @@
                 android:visibility="gone" />
         </FrameLayout>
 
-        <!-- Title -->
         <TextView
             android:id="@+id/puzzleTitle"
             android:layout_width="match_parent"
@@ -52,7 +50,7 @@
             android:gravity="center"
             android:layout_marginBottom="8dp" />
 
-        <!-- Difficulty -->
+
         <TextView
             android:id="@+id/puzzleDifficulty"
             android:layout_width="match_parent"
@@ -62,7 +60,7 @@
             android:gravity="center"
             android:layout_marginBottom="16dp" />
 
-        <!-- Description -->
+
         <TextView
             android:id="@+id/puzzleDescription"
             android:layout_width="match_parent"
@@ -70,7 +68,7 @@
             android:textSize="16sp"
             android:layout_marginBottom="16dp" />
 
-        <!-- Rules Section -->
+
         <TextView
             android:id="@+id/rulesHeader"
             android:layout_width="match_parent"
@@ -87,7 +85,7 @@
             android:textSize="14sp"
             android:layout_marginBottom="16dp" />
 
-        <!-- Tips Section -->
+
         <TextView
             android:id="@+id/tipsHeader"
             android:layout_width="match_parent"
@@ -104,7 +102,7 @@
             android:textSize="14sp"
             android:layout_marginBottom="24dp" />
 
-        <!-- Action Buttons -->
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

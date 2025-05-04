@@ -17,7 +17,6 @@ import org.opencv.imgproc.Imgproc
 class KakuroProcessor(private val context: Context) : PuzzleProcessor {
 
     private val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-    private val TAG = "KakuroProcessor"
 
     enum class KakuroCellType {
         BLOCKED, CLUE_ONE, CLUE_TWO, EMPTY

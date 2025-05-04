@@ -36,9 +36,6 @@ class NonogramCreator : AppCompatActivity() {
     private lateinit var convertButton: Button
     private var currentPhotoUri: Uri? = null
     private var nonogramSize = 15 // Default nonogram size (15x15)
-    private var ditherEnabled = true
-    private var threshold = 128
-    private var preserveAspectRatio = true
 
     // Register the activity result launcher
     private val takePictureLauncher = registerForActivityResult(
@@ -77,9 +74,11 @@ class NonogramCreator : AppCompatActivity() {
                     startActivity(Intent(this, PuzzleImageProcessorActivity::class.java))
                     true
                 }
-                R.id.nav_nonogram-> {
+
+                R.id.nav_nonogram -> {
                     true
                 }
+
                 else -> false
             }
         }
@@ -275,7 +274,11 @@ class NonogramCreator : AppCompatActivity() {
         return threshold
     }
 
-    private fun findBestCropRegion(edgeMap: Array<BooleanArray>, srcWidth: Int, srcHeight: Int): Pair<Int, Int> {
+    private fun findBestCropRegion(
+        edgeMap: Array<BooleanArray>,
+        srcWidth: Int,
+        srcHeight: Int
+    ): Pair<Int, Int> {
         var maxSum = 0
         var bestX = (srcWidth - nonogramSize) / 2
         var bestY = (srcHeight - nonogramSize) / 2
@@ -288,7 +291,15 @@ class NonogramCreator : AppCompatActivity() {
                         if (edgeMap.getOrNull(y + i)?.getOrNull(x + j) == true) sum++
                     }
                 }
-                if (sum > maxSum || (sum == maxSum && isCloserToCenter(x, y, srcWidth, srcHeight, bestX, bestY))) {
+                if (sum > maxSum || (sum == maxSum && isCloserToCenter(
+                        x,
+                        y,
+                        srcWidth,
+                        srcHeight,
+                        bestX,
+                        bestY
+                    ))
+                ) {
                     maxSum = sum
                     bestX = x
                     bestY = y
@@ -298,7 +309,14 @@ class NonogramCreator : AppCompatActivity() {
         return Pair(bestX, bestY)
     }
 
-    private fun isCloserToCenter(x: Int, y: Int, width: Int, height: Int, bestX: Int, bestY: Int): Boolean {
+    private fun isCloserToCenter(
+        x: Int,
+        y: Int,
+        width: Int,
+        height: Int,
+        bestX: Int,
+        bestY: Int
+    ): Boolean {
         val centerX = (width - nonogramSize) / 2
         val centerY = (height - nonogramSize) / 2
         val currentDist = (x - centerX).toDouble().pow(2) + (y - centerY).toDouble().pow(2)
@@ -326,15 +344,21 @@ class NonogramCreator : AppCompatActivity() {
                 pixels[y * width + x] = Color.rgb(newPixel, newPixel, newPixel)
 
                 // Atkinson dithering (better for line art)
-                if (x + 1 < width) pixels[y * width + x + 1] = applyError(pixels[y * width + x + 1], quantError * 1/8)
-                if (x + 2 < width) pixels[y * width + x + 2] = applyError(pixels[y * width + x + 2], quantError * 1/8)
+                if (x + 1 < width) pixels[y * width + x + 1] =
+                    applyError(pixels[y * width + x + 1], quantError * 1 / 8)
+                if (x + 2 < width) pixels[y * width + x + 2] =
+                    applyError(pixels[y * width + x + 2], quantError * 1 / 8)
                 if (y + 1 < height) {
-                    if (x > 0) pixels[(y + 1) * width + x - 1] = applyError(pixels[(y + 1) * width + x - 1], quantError * 1/8)
-                    pixels[(y + 1) * width + x] = applyError(pixels[(y + 1) * width + x], quantError * 1/8)
-                    if (x + 1 < width) pixels[(y + 1) * width + x + 1] = applyError(pixels[(y + 1) * width + x + 1], quantError * 1/8)
+                    if (x > 0) pixels[(y + 1) * width + x - 1] =
+                        applyError(pixels[(y + 1) * width + x - 1], quantError * 1 / 8)
+                    pixels[(y + 1) * width + x] =
+                        applyError(pixels[(y + 1) * width + x], quantError * 1 / 8)
+                    if (x + 1 < width) pixels[(y + 1) * width + x + 1] =
+                        applyError(pixels[(y + 1) * width + x + 1], quantError * 1 / 8)
                 }
                 if (y + 2 < height) {
-                    pixels[(y + 2) * width + x] = applyError(pixels[(y + 2) * width + x], quantError * 1/8)
+                    pixels[(y + 2) * width + x] =
+                        applyError(pixels[(y + 2) * width + x], quantError * 1 / 8)
                 }
             }
         }
@@ -385,6 +409,7 @@ class NonogramCreator : AppCompatActivity() {
 
         return threshold
     }
+
     private fun convertToGrayscale(bitmap: Bitmap): Bitmap {
         val width = bitmap.width
         val height = bitmap.height
@@ -403,67 +428,12 @@ class NonogramCreator : AppCompatActivity() {
 
         return grayBitmap
     }
-
-    private fun generateClues(grid: Array<IntArray>, isColumn: Boolean): List<List<Int>> {
-        val clues = mutableListOf<List<Int>>()
-        val size = grid.size
-
-        for (i in 0 until size) {
-            val sequence = mutableListOf<Int>()
-            var count = 0
-
-            for (j in 0 until size) {
-                val cell = if (isColumn) grid[j][i] else grid[i][j]
-                if (cell == 1) {
-                    count++
-                } else if (count > 0) {
-                    sequence.add(count)
-                    count = 0
-                }
-            }
-
-            if (count > 0 || sequence.isEmpty()) {
-                sequence.add(count)
-            }
-            clues.add(sequence)
-        }
-
-        return clues
-    }
-
-
-
-
-
-
-
-    private fun saveNonogramToGallery(bitmap: Bitmap) {
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, "nonogram_${System.currentTimeMillis()}.jpg")
-            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-                put(MediaStore.Images.Media.IS_PENDING, 1)
-            }
-        }
-
-        val resolver = contentResolver
-        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-
-        uri?.let {
-            try {
-                resolver.openOutputStream(it)?.use { outputStream ->
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
-                    resolver.update(uri, contentValues, null, null)
-                }
-                Toast.makeText(this, "Nonogram saved to gallery", Toast.LENGTH_SHORT).show()
-            } catch (e: IOException) {
-                resolver.delete(uri, null, null)
-                Toast.makeText(this, "Failed to save nonogram", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
 }
+
+
+
+
+
+
+
+

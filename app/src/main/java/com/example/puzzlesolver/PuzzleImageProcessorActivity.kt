@@ -1,4 +1,3 @@
-
 package com.example.puzzlesolver
 
 import android.content.Intent
@@ -59,18 +58,22 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                     startActivity(Intent(this, MainActivity::class.java))
                     true
                 }
+
                 R.id.nav_gen_puzzle -> {
                     startActivity(Intent(this, PuzzleGeneratorActivity::class.java))
                     true
                 }
+
                 R.id.nav_camera -> {
-                    dispatchTakePictureIntent()
+
                     true
                 }
+
                 R.id.nav_nonogram -> {
                     startActivity(Intent(this, NonogramCreator::class.java))
                     true
                 }
+
                 else -> false
             }
         }
@@ -124,6 +127,7 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                         showLoading(false)
                     }
                 }
+
                 binaryBoard != null -> {
                     coroutineScope.launch {
                         showLoading(true)
@@ -157,6 +161,7 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                         showLoading(false)
                     }
                 }
+
                 kakuroBoard != null -> {
                     coroutineScope.launch {
                         showLoading(true)
@@ -187,6 +192,7 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                         showLoading(false)
                     }
                 }
+
                 else -> {
                     Toast.makeText(this, "Please process a puzzle first", Toast.LENGTH_SHORT).show()
                 }
@@ -213,7 +219,8 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                     ) { processor: PuzzleProcessor, callback: (Pair<Any, Bitmap>) -> Unit ->
                         launch(Dispatchers.Default) {
                             try {
-                                val processedBitmap = (processor as KakuroProcessor).process(originalBitmap)
+                                val processedBitmap =
+                                    (processor as KakuroProcessor).process(originalBitmap)
                                 val board = processor.extractKakuroCells(processedBitmap)
                                 callback(Pair(board, processedBitmap))
                             } catch (e: Exception) {
@@ -221,13 +228,15 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                                 throw e
                             }
                         }
-                    }, Triple(
+                    },
+                    Triple(
                         SudokuProcessor(this@PuzzleImageProcessorActivity),
                         "sudoku"
                     ) { processor: PuzzleProcessor, callback: (Pair<Any, Bitmap>) -> Unit ->
                         launch(Dispatchers.Default) {
                             try {
-                                val processedBitmap = (processor as SudokuProcessor).process(originalBitmap)
+                                val processedBitmap =
+                                    (processor as SudokuProcessor).process(originalBitmap)
                                 val board = processor.extractSudokuNumbers(processedBitmap)
                                 callback(Pair(board, processedBitmap))
                             } catch (e: Exception) {
@@ -235,13 +244,15 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                                 throw e
                             }
                         }
-                    },                 Triple(
+                    },
+                    Triple(
                         BinaryProcessor(this@PuzzleImageProcessorActivity),
                         "binary"
                     ) { processor: PuzzleProcessor, callback: (Pair<Any, Bitmap>) -> Unit ->
                         launch(Dispatchers.Default) {
                             try {
-                                val processedBitmap = (processor as BinaryProcessor).process(originalBitmap)
+                                val processedBitmap =
+                                    (processor as BinaryProcessor).process(originalBitmap)
                                 val board = processor.extractBinaryPuzzle(processedBitmap)
                                 callback(Pair(board, processedBitmap))
                             } catch (e: Exception) {
@@ -274,6 +285,7 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                                     break@processorLoop
                                 }
                             }
+
                             "binary" -> {
                                 if (isValidBinaryBoard(board as Array<Array<BinaryProcessor.BinaryCell>>)) {
                                     binaryBoard = board
@@ -282,6 +294,7 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                                     break@processorLoop
                                 }
                             }
+
                             "kakuro" -> {
                                 if (isValidKakuroBoard(board as Array<Array<KakuroProcessor.KakuroCell>>)) {
                                     kakuroBoard = board
@@ -351,6 +364,7 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
                         Log.e("ImageSelection", "Error loading image", e)
                     }
                 }
+
                 REQUEST_IMAGE_CAPTURE -> {
                     val imageBitmap = data?.extras?.get("data") as Bitmap
                     processedImageView.setImageBitmap(imageBitmap)
@@ -444,6 +458,7 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
 
         return clues
     }
+
     fun showLoading(isLoading: Boolean) {
         loadingIndicator.visibility = if (isLoading) View.VISIBLE else View.GONE
         solveButton.isEnabled = !isLoading
@@ -451,48 +466,3 @@ class PuzzleImageProcessorActivity : AppCompatActivity() {
 
     }
 }
-
-
-
-//val imageUri = Uri.parse(imageUriString)
-//val bitmap = uriToBitmap(imageUri) ?: run {
-//    Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show()
-//    finish()
-//    return
-//}
-//PuzzleClassifier.initialize(this)
-//
-//// Get image URI from intent
-//val imageUriString = intent.getStringExtra("imageUri") ?: run {
-//    Toast.makeText(this, "No image provided", Toast.LENGTH_SHORT).show()
-//    finish()
-//    return
-//}
-//val (prediction, confidence) = PuzzleClassifier.classify(bitmap)
-//val confidencePercent = (confidence * 100).toInt()
-//
-//runOnUiThread {
-//    Toast.makeText(
-//        this,
-//        "Prediction: $prediction\nConfidence: $confidencePercent%",
-//        Toast.LENGTH_LONG
-//    ).show()
-//
-//    val processedBitmap = when {
-//        prediction.contains("sudoku", ignoreCase = true) -> SudokuProcessor(this).process(bitmap)
-//        prediction.contains("kakuro", ignoreCase = true) -> KakuroProcessor(this).process(bitmap)
-//        prediction.contains("nonogram", ignoreCase = true) -> NonogramProcessor(this).process(bitmap)
-//        prediction == "unknown" -> {
-//            Toast.makeText(
-//                this,
-//                "Unrecognized puzzle type. Try another image.",
-//                Toast.LENGTH_SHORT
-//            ).show()
-//            bitmap
-//        }
-//        else -> {
-//            Toast.makeText(this, "Unexpected label: $prediction", Toast.LENGTH_SHORT)
-//                .show()
-//            bitmap
-//        }
-//    }

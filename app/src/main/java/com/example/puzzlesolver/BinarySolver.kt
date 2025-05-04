@@ -199,7 +199,6 @@ class BinarySolver {
                 }
             }
 
-            // Similar check for columns (omitted for brevity but similar logic)
 
             return changed
         }
